@@ -50,7 +50,7 @@ class QdrantHandler:
             points=points
         )
 
-    def query_embedding(self, embedding, top_k=10):
+    def query_embedding(self, embedding, top_k=10,similarity_threshold=0.5):
         """
         Query embeddings from Qdrant.
 
@@ -66,7 +66,8 @@ class QdrantHandler:
             query_vector=embedding,
             limit=top_k
         )
-        return results
+        filtered_results = [result for result in results if result.score >= similarity_threshold]
+        return filtered_results
 
     def close(self):
         """
