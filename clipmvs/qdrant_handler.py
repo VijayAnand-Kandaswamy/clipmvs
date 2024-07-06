@@ -50,7 +50,7 @@ class QdrantHandler:
             points=points
         )
 
-    def query_embedding(self, embedding, top_k=10,similarity_threshold=0.5):
+    def query_embedding(self, embedding, top_k=10,similarity_threshold=0.2):
         """
         Query embeddings from Qdrant.
 
