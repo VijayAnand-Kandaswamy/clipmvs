@@ -2,6 +2,7 @@ import csv
 import matplotlib.pyplot as plt
 from concurrent.futures import ThreadPoolExecutor
 from PIL import Image
+import numpy as np
 
 class MultiViewSummarizer:
     """
@@ -17,6 +18,7 @@ class MultiViewSummarizer:
         self.retriever = CLIPEmbeddingRetriever()
         self.qdrant_handler = QdrantHandler(config_path)
         self.vidloaderdict = {}
+        self.timestampvsframes = {}
     
     def set_video_loaders(self, video_paths, batch_size=100, interval=12):
         for vid_path in video_paths:
@@ -79,6 +81,11 @@ class MultiViewSummarizer:
         for result in results:
             timestamp = result.payload['timestamp']
             frame =  self.vidloaderdict[result.payload['path']].get_frame_by_timestamp(timestamp)
+            print(frame)
+            if(timestamp not in self.timestampvsframes):
+                self.timestampvsframes[timestamp] = [frame]
+            else:
+                self.timestampvsframes[timestamp] += [frame]
             summary.append({
                 "timestamp": timestamp,
                 "frame": frame,
@@ -103,10 +110,12 @@ class MultiViewSummarizer:
         all_summaries = []
         for i, query in enumerate(queries):
             summary = self.generate_summary(query, top_k=top_k, is_image=is_images[i])
-            all_summaries.append(summary)
+            all_summaries+=summary
             self.visualize_summary(summary, query, is_images[i])
             csv_path = f'summary_{i}.csv'  # Create a CSV for each query
             self.save_summary_to_csv(summary, query, csv_path)
+        
+        self.export_vid(all_summaries)
 
     def visualize_summary(self, summary, query, is_image):
         """
@@ -119,10 +128,13 @@ class MultiViewSummarizer:
         """
         # Visualize frames
         plt.figure(figsize=(15, 5))
+        print(summary)
         for i, item in enumerate(summary):
             frame = item["frame"]
+            print(frame)
             timestamp = item["timestamp"]
             if frame:
+                print(frame)
                 plt.subplot(1, len(summary), i + 1)
                 plt.imshow(frame)
                 plt.title(f"Timestamp: {timestamp:.2f}s\nScore: {item['similarity']:.4f}")
@@ -158,6 +170,23 @@ class MultiViewSummarizer:
             writer.writeheader()
             for item in summary:
                 writer.writerow({'query':query,'timestamp': item['timestamp'], 'similarity': item['similarity'], 'video_path': item['path']})
+    
+    def export_vid(self,all_summaries, fps=12):
+        images={}
+        print(all_summaries)
+        for item in all_summaries: 
+            images[item['timestamp']] = item['frame']
+        image_index = list(images.keys())
+        image_index.sort()
+        width, height = images[0].size 
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter("./output.mp4", fourcc, fps, (width, height))
+
+        for x in image_index:
+            np_image = np.array(images[x])
+            bgr_image = cv2.cvtColor(np_image, cv2.COLOR_RGB2BGR)
+            out.write(bgr_image)
+        out.release()
 
     def close(self):
         """
