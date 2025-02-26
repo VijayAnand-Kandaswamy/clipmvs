@@ -1,3 +1,4 @@
+import cv2
 import csv
 import matplotlib.pyplot as plt
 from concurrent.futures import ThreadPoolExecutor
@@ -181,7 +182,7 @@ class MultiViewSummarizer:
             images[item['timestamp']] = item['frame']
         image_index = list(images.keys())
         image_index.sort()
-        width, height = images[0].size 
+        width, height = list(images.values())[0].size
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out = cv2.VideoWriter("./output.mp4", fourcc, fps, (width, height))
 
