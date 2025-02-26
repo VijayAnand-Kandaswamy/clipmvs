@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 from concurrent.futures import ThreadPoolExecutor
 from PIL import Image
 import numpy as np
+from clipmvs.clip_retriever import CLIPEmbeddingRetriever 
+from clipmvs.qdrant_handler import QdrantHandler 
+from clipmvs.video_loader import VideoDataLoader
 
 class MultiViewSummarizer:
     """
