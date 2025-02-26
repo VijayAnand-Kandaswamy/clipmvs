@@ -1,6 +1,7 @@
 import cv2
 from PIL import Image
 import math
+from matplotlib import pyplot as plt
 
 class VideoDataLoader:
     """
